@@ -1,12 +1,10 @@
 # Análisis — Tarea 1
 
 **Integrantes:**
-1.
-2.
-3.
+1. Victor Martinez Reyes
 
-**Fork:**
-**Rama:**
+**Fork:** https://github.com/VmartinezR23/tarea1-mini-interprete/tree/main
+**Rama:** tarea1-pruebas-refactorizacion
 
 > Contesten en este archivo. Respuestas breves y concretas: se califica que
 > hayan entendido, no la extensión.
@@ -19,10 +17,10 @@
 
 | Componente | Qué recibe | Qué entrega | De qué es responsable |
 |---|---|---|---|
-| `lexer` | | | |
-| `parser` | | | |
-| `ast` | | | |
-| `evaluator` | | | |
+| `lexer` | El texto inicial | Tokens que corresponden al texto |Identifica las partes del texto y las convierte en tokens|
+| `parser` | Los tokens del lexer | Una representacion en AST |Verifica que siga la gramatica y genera un árbol de sintaxis|
+| `ast` |Los valores para crear nodos | Objetos que representan numeros y operaciones  | Define la estructura de los nodos que representan números y operaciones en un AST|
+| `evaluator` |El AST a evaluar| El valor resultante del AST | Evaluar el AST para entregar su valor representado en número |
 
 ### 1.2 ¿Qué recorrido sigue una expresión desde que se recibe como texto hasta que produce un resultado?
 
@@ -31,9 +29,9 @@
 | Etapa | Cómo se ve `(3 + 4) * 2` aquí |
 |---|---|
 | texto | `"(3 + 4) * 2"` |
-| tokens | |
-| AST | |
-| resultado | |
+| tokens |[ PAR_IZQ, NUMERO(3), MAS, NUMERO(4), PAR_DER, POR, NUMERO(2)] |
+| AST |*/ \+   2/ \3   4|
+| resultado | 14 |
 
 > Para el renglón del AST, dibújenlo **primero ustedes** y después comprueben
 > con `python3 interprete.py --arbol "(3 + 4) * 2"`. Si su dibujo y el del
@@ -48,7 +46,21 @@
 
 | Prueba | Componente | Comportamiento que verifica | ¿Cuántos operadores usa? | ¿Normal, frontera o inválida? |
 |---|---|---|---|---|
-| | | | | |
+| test_tokeniza_un_numero_solo | lexer | Verifica que un número se tokenize correctamente como numero y valor de 42 | 0 | Normal |
+| test_tokeniza_una_suma | lexer | Verifica que la suma se tokenize correctamente en dos números y el signo de suma | 1 | Normal |
+| test_los_espacios_no_producen_tokens | lexer | Verifica que los espacios no generen tokens | 1 | Normal |
+| test_tokeniza_parentesis | lexer | Verifica que los parentesis y números se tokenizen correctamente en su tipo correspondiente | 0 | Normal |
+|test_construye_el_arbol_de_una_suma | parser | Verifica que se construya el AST de la suma | 1 | normal |
+|test_la_multiplicacion_se_agrupa_antes_que_la_suma | parser | Verifica la jerarquia de la multiplicacion agrupandose primero | 2 |normal |
+| test_los_parentesis_cambian_la_agrupacion | parser | Verifica que los parentesis cambien segun la jerarquia y agrupacion | 2 | normal |
+| test_suma | evaluator | Verifica que se evalue correctamente la suma | 1 | Normal |
+| test_resta | evaluator | Verifica que se evalue correctamente la resta | 1 | Normal |
+| test_multiplicacion | evaluator | Verifica que se evalue correctamente la multiplicación | 1 | Normal |
+| test_division | evaluator | Verifica que se evalue correctamente la division | 1 | Normal |
+| test_precedencia_sin_parentesis | evaluator | Verifica el resultado con el orden sin parentesis | 2 | Normal |
+| test_precedencia_con_parentesis | evaluator | Verifica el resultado usando parentesis en el orden | 2 | Normal |
+
+
 
 > Llenen la tabla **completa**, con las 13. Es tediosa a propósito: la única
 > forma de saber qué no está cubierto es caracterizar sistemáticamente lo que
@@ -56,6 +68,12 @@
 > qué combinación **no aparece nunca**.
 
 ### 2.2 ¿Qué comportamientos **no** estaban probados?
+Que la division entre 0 lance ErrorDeEvaluacion
+El menos unario sea invalido a menos que se escriba de la forma (0-x)
+Que una entrada invalida sea rechazada con ErrorDeSintaxis
+El mensaje de error que indique la posicion dentro del texto
+Que los números que contengan  0 a la izquierda se interpreten de manera normal 
+Que los operadores de misma precedencia se asocien de manera correcta a la izquierda 
 
 > Ésta es la pregunta importante de toda la tarea. Tómense su tiempo.
 
@@ -67,15 +85,25 @@
 
 | Prueba (archivo::nombre) | Entrada | Esperado | Categoría | ¿Por qué esa categoría? |
 |---|---|---|---|---|
-| | | | | |
+|test_parser.py::test_menos_unario_invalido| -3| ErrorDeSintaxis | inválida | Porque es un valor que del cual se espera un error|
+|test_parser.py::test_parentesis_invalidos|3 + 3 () |ErrorDeSinteaxis | invalida| Los parentesis no contienen ni un número o expresion|
+| test_evaluator.py :: division_entre_cero | algún numero entre cero (10/0) | ErrorDeEvaluacion | Frontera | Porque verifica que el programa maneje bien la excepcion de que no se pueda dividir entre cero |
+|test_lexer.py::test_numero_con_ceros_izquierda| 0023 | que sea interpretado como 23 (sin tener en cuenta los 0) | frontera |comprueba el comportamiento en el caso de los ceros a la izquierda|
+|test_evaluator.py::test_division_resultado_menor_que_uno| 1 / 5 | 0.2 |frontera |Porque evalua que la divison de el resultado correcto aún siendo menor que 0|
+|test_evaluator.py::test_asociatividad_izquierda|10 - 2 - 3 - 1| el resultado 4| normal | porque es un caso habitual de interpretacion |
+|test_evaluator.py::test_jerarquia_operaciones| 10 / 5 + 3 * 4| 14 | normal | Porque valida el funcionamiento normal del interprete |
+
 
 ---
 
 ## 4. Los defectos
 
 ### 4.1 ¿Qué defecto reveló primero una prueba nueva?
+La primera prueba que reveló un defecto fue que el parser no detectaba los tokens sobrantes y pasaba la prueba como valida y no reportaba el error esperado.
 
 ### 4.2 ¿Por qué el comportamiento observado era incorrecto?
+Porque el parser debia de asegurar que todos los tokens que entraban formaran una expresion valida por lo que no cumplia con la semantica declarada en el README, donde establece que una entrada invalida debe de rechazarse con un ErrorDeSintaxis
+
 
 > No basta con "daba mal". Digan contra qué lo están comparando: qué regla,
 > qué línea de la semántica declarada del README.
@@ -83,26 +111,43 @@
 ### 4.3 ¿Qué cambio realizaron?
 
 | Defecto | Entrada que lo revela | Daba | Debería dar | Commit rojo | Commit verde |
-|---|---|---|---|---|---|
+|---|---|---|---|---|
+|El parser aceptaba expresiones con parentesis vacios |3 + 3 ()|la prueba pasaba sin lanzar error |Lanzar ErrorDeSintaxis|4709f13|b380e2a|
+|La asociatividad de operaciones iguales no se cumplia a la izquierda|10 - 2 - 3 - 1| 10 (10 - (2 - (3 - 1)) = 10)|4 |4709f13|b380e2a|
+
 | | | | | | |
 
 ### 4.4 ¿Cómo saben que la corrección es general y no sólo hace pasar ese ejemplo?
+En el caso de la asociatividad al evaluar con el caso de la resta y al esta no ser asociativa permite identificar que las operaciones se agrupan en un orden incorrecto.
 
----
+En el caso del parser con los parentesis se puede comprobar que la solución es general comprobando en más casos las diferentes formas en las que pudiera ocurrir el comportamiento incorrecto.
+
 
 ## 5. Diseño
 
 ### 5.1 ¿Qué duplicación o señal de mal diseño encontraron?
 
+1. En primer caso se encontro rigidez en los métodos de _expresion() y _termino() que utilizaban recursión a la derecha, lo que dificultaba corregir la asociatividad de los operadores por lo que fue necesario modificar ambos métodos para el correcto funcionamiento de las operaciones del mismo nivel de izquierda a derecha.
+
+2. En el caso del evaluator contiene un mal diseño al contener condicionales explosivos al momento de determinar el operador y el orden que debe de seguir.
 > Al menos dos. Usen el vocabulario de clase: duplicación, rigidez,
 > acoplamiento alto, condicionales repetidos, amplificación del cambio.
 
 ### 5.2 ¿Qué refactorización realizaron, y por qué conserva el comportamiento?
 
+Para el primer caso de la asociatividad en el caso de _expresion() y _termino() usaban recursion por lo que agrupaban de incorrectamente operaciones de la misma jerarquia, por lo que se modifico a usar un ciclo while pero conserva su comportamiento porque ambos métodos aún mantienen relación al momento de analizar en orden cada una de las operaciones.
+
+Para el segundo caso de los parentesis vacios solamente se agrego una comprobación en el método de _parsear() por lo que conserva aún el comportamiento ya que si la prueba no contiene un parentesis vacio pasa de forma normal al no lanzar ninguna excepción.
+
+
 > "Las pruebas siguen pasando" es parte de la respuesta, pero no toda.
 > ¿Por qué el cambio es equivalente?
 
 ### 5.3 ¿Sería pertinente usar Factory Method, Adapter o ninguno?
+En este caso no seria necesario de ninguno ya que para resolver los problemas encontrados solo fue util el refactorizar y modificar algunos métodos para cumplir con el comportamiento esperado, por lo que si se emplean pueden aumentar la complejidad del codigo sin dar un benificio util.
+
+Para que exista el caso de que sea necesario utilizar alguno de los dos métodos debe de exisistir un problema en el cual sea de gran ayuda utilizar alguno de los patrones de diseño, como por ejemplo adaptar alguna biblioteca externa al interprete.
+
 
 > Justifiquen. **"Ninguno" puede ser la respuesta correcta.** Si dicen que sí,
 > digan qué problema concreto resuelve y qué costo tiene. Si dicen que no,
@@ -110,10 +155,12 @@
 
 ### 5.4 ¿Qué parte del sistema sería más difícil de modificar si se agregara un operador nuevo?
 
+Para agregar un nuevo operador al sistema seria necesario modificar los 4 archivos principales (el de los token.py, evaluator.py, lexer.py y parser.py) ya que a pesar de que sean diferentes archivos, cada uno cuenta con una responsabilidad diferente con la cual interactuan en cada etapa del interprete(token.py define el tipo de token,lexer.py reconoce cada simbolo y le asigna un token definido, parser.py determina su orden y la asociatividad y evaluator.py evalua la expresión), por lo que todo tendría que ser modificado al agregar un nuevo operador.
+
+
 > Por ejemplo `%`. ¿Cuántos archivos hay que tocar? ¿Por qué?
 
 ---
-
 ## Antes de la declaración: inténtenlo primero ustedes
 
 Usar IA o no es decisión de cada quien, y el curso la permite. Pero **les
